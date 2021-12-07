@@ -1,6 +1,6 @@
 # MARCAR SERVICO NO CONSULADO BR
 
-Steps:
+## Passos iniciais
 
 Criat bot no telegram
 
@@ -13,5 +13,9 @@ Usar ficheiro dotenv .env.example e criar um .env
 Instalar packages: `npm install`
 Executar: `npm run start`
 
-Dica: use um crontab para executar isto a cada 10 minutos por exemplo
-No MACOS: 0 10 \* \* \* npm run start
+## Configurar Crontab para rodar automaticamente (Opcional)
+
+- `crontab -e` - vai abrir o editor vim
+- Adicionar a linha: ` * 10 * * * ./start.sh` para executar a cada 10 minutos
+- Verifique se o crontab esta ativo: `crontab -l`
+- Observe o log em app.log

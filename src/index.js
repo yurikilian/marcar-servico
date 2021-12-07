@@ -29,7 +29,6 @@ async function launchBrowser() {
 
 async function run() {
 
-    await notifyText("Inicializando verificacao")
     const { browser, page } = await launchBrowser()
 
     try {
@@ -40,9 +39,9 @@ async function run() {
         if (isAvailable) {
             await notifyImage("Tem horário disponível")
         } else {
-            await notifyImage("Horarios indisponiveis")
+            log("Horaios indisponiveis")
         }
-
+        
         log(isAvailable)
 
     } catch (err) {
