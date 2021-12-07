@@ -29,6 +29,8 @@ async function launchBrowser() {
 
 async function run() {
 
+    notifyText("Verficando disponibilidade do servico")
+
     const { browser, page } = await launchBrowser()
 
     try {
@@ -39,7 +41,8 @@ async function run() {
         if (isAvailable) {
             await notifyImage("Tem horário disponível")
         } else {
-            log("Horaios indisponiveis")
+            log("Horarios indisponiveis")
+            notifyText("Horarios indisponiveis")
         }
         
         log(isAvailable)
