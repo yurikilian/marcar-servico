@@ -1,10 +1,16 @@
-# Marcar CNH
+# MARCAR SERVICO NO CONSULADO BR
 
+Steps:
 
-### Crontab configuration
+Criat bot no telegram
 
-Example for running it each 30 minutes
+Adicionar bot ao grupo e obter group id usando o method getUpdates
 
-```bash
-*/30 * * * * cd /marcar_cnh && yarn start
-```
+Adicionar usuarios interessados
+
+Usar ficheiro dotenv .env.example e criar um .env
+
+Instalar packages: ``npm install``
+Executar: ``npm run start``
+
+Dica: use um crontab para executar isto a cada hora por exemplo
