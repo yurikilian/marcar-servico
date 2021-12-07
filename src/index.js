@@ -35,22 +35,18 @@ async function run() {
     await page.screenshot({ path: "./image.png" });
 
     if (isAvailable) {
-      await notifyImage("Tem horário disponível");
+      await notifyImage("Horário disponível");
     } else {
-      log("Horarios indisponiveis");
-      await notifyText("Horários indisponíveis");
+      await notifyText("Nenhum Horário disponvível");
     }
 
     log(isAvailable);
   } catch (err) {
-    log(err);
+    console.error(err);
 
-    if (TRIES <= MAX_TRIES) {
-      TRIES += 1;
-      await run();
-    } else {
-      log("Tentou, tentou e não conseguiu");
-    }
+    await notifyText(
+      `[WARNING] Falha ao executar o verificador. ${err.message}`
+    );
   } finally {
     await browser.close();
   }
@@ -58,9 +54,16 @@ async function run() {
 
 (async () => {
   console.log("Servico inicializado: ", process.env.CRONTAB);
-  var job = new CronJob(process.env.CRONTAB, async () => {
-    console.log("Execução de serviço disparada");
-    await run();
-  });
+
+  const options = {
+    cronTime: process.env.CRONTAB,
+    onTick: async () => {
+      console.log("Execução de serviço disparada");
+      await run();
+    },
+    runOnInit: true,
+  };
+
+  const job = new CronJob(options);
   job.start();
 })();
