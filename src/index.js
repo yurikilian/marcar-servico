@@ -38,7 +38,7 @@ async function run() {
       await notifyImage("Tem horário disponível");
     } else {
       log("Horarios indisponiveis");
-      await notifyImage("Horários indisponíveis");
+      await notifyText("Horários indisponíveis");
     }
 
     log(isAvailable);
