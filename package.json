@@ -15,6 +15,8 @@
   },
   "scripts": {
     "start": "pm2 start src/index.js",
+    "list": "pm2 list",
     "kill": "pm2 delete all"
   }
 }
+
