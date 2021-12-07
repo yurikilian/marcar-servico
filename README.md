@@ -10,7 +10,8 @@ Adicionar usuarios interessados
 
 Usar ficheiro dotenv .env.example e criar um .env
 
-Instalar packages: ``npm install``
-Executar: ``npm run start``
+Instalar packages: `npm install`
+Executar: `npm run start`
 
-Dica: use um crontab para executar isto a cada hora por exemplo
+Dica: use um crontab para executar isto a cada 10 minutos por exemplo
+No MACOS: 0 10 \* \* \* npm run start
