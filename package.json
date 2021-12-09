@@ -6,6 +6,7 @@
   "type": "module",
   "dependencies": {
     "cron": "^1.8.2",
+    "date-fns": "^2.27.0",
     "dotenv": "^10.0.0",
     "jsdom": "^18.0.0",
     "node-fetch": "^3.0.0",
@@ -19,4 +20,3 @@
     "kill": "pm2 delete all"
   }
 }
-
