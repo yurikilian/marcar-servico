@@ -55,7 +55,7 @@ async function run() {
   job.start();
 
   notifyText(
-    `Procurando agenda para @yurikilian. Data de início: ${format(
+    `Procurando agenda para @yurikilian Data de início: ${format(
       new Date(),
       "dd/MM/yyyy"
     )}. ${process.env.MSG_TIME}`
