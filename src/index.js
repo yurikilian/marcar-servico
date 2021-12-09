@@ -57,7 +57,7 @@ async function run() {
   notifyText(
     `Procurando agenda para @yurikilian Data de início: ${format(
       new Date(),
-      "dd/MM/yyyy"
+      "dd/MM/yyyy HH:mm"
     )}. ${process.env.MSG_TIME}`
   );
 })();
