@@ -10,7 +10,7 @@ const log_1 = __importDefault(require("./log"));
 const AttendanteLocalityScenario_1 = __importDefault(require("./scenario/AttendanteLocalityScenario"));
 const SchedulingSubjectScenario_1 = __importDefault(require("./scenario/SchedulingSubjectScenario"));
 const telegram_js_1 = require("./telegram.js");
-// import { CronJob } from "cron";
+const cron_1 = require("cron");
 async function launchBrowser() {
     return await puppeteer_1.default.launch({
         timeout: 60 * 1000, // 60s
@@ -36,37 +36,48 @@ async function run() {
                 for (const place of locality.places) {
                     (0, log_1.default)(`Distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`);
                     const page = await browser.newPage();
-                    page.setViewport({ width: 1920, height: 1080 });
-                    await page.goto(configuration_1.default.getEnv().url, {
-                        waitUntil: "networkidle2",
-                    });
-                    await new SchedulingSubjectScenario_1.default(page).execute();
-                    await new AttendanteLocalityScenario_1.default(page, district, locality, place).execute();
-                    let scheduleAvailable = true;
+                    page.setDefaultTimeout(2000);
+                    page.setDefaultNavigationTimeout(2000);
                     try {
-                        const errorHtml = await page.waitForSelector("div.error-message > div > div > h5", {
-                            timeout: 1000,
+                        page.setViewport({ width: 1920, height: 1080 });
+                        await page.goto(configuration_1.default.getEnv().url, {
+                            waitUntil: "networkidle2",
                         });
-                        const errorMessage = await (errorHtml === null || errorHtml === void 0 ? void 0 : errorHtml.evaluate((el) => el.textContent));
-                        console.log(errorMessage);
-                        if (errorMessage) {
-                            (0, log_1.default)(`${errorMessage} Distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`);
-                            scheduleAvailable = false;
+                        await new SchedulingSubjectScenario_1.default(page).execute();
+                        await new AttendanteLocalityScenario_1.default(page, district, locality, place).execute();
+                        let scheduleAvailable = true;
+                        try {
+                            const errorHtml = await page.waitForSelector("div.error-message > div > div > h5", {
+                                timeout: 1000,
+                            });
+                            const errorMessage = await (errorHtml === null || errorHtml === void 0 ? void 0 : errorHtml.evaluate((el) => el.textContent));
+                            console.log(errorMessage);
+                            if (errorMessage) {
+                                (0, log_1.default)(`${errorMessage} Distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`);
+                                scheduleAvailable = false;
+                            }
                         }
+                        catch (error) {
+                            console.log(error);
+                        }
+                        if (scheduleAvailable) {
+                            (0, log_1.default)(`Agenda disponível para o distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`);
+                            await page.screenshot({ path: "./image.png" });
+                            await (0, telegram_js_1.notifyImage)(`Agenda disponível para o distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`);
+                        }
+                        else {
+                            await page.screenshot({ path: "./image.png" });
+                            await (0, telegram_js_1.notifyImage)(`Nenhuma agenda disponível para o distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`);
+                        }
+                        await page.close();
+                        await page.waitForTimeout(100);
                     }
-                    catch (error) {
-                        console.log(error);
-                    }
-                    if (scheduleAvailable) {
-                        (0, log_1.default)(`Agenda disponível para o distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`);
+                    catch (err) {
+                        let e = err;
+                        console.error(e.message);
                         await page.screenshot({ path: "./image.png" });
-                        await (0, telegram_js_1.notifyImage)(`Agenda disponível para o distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`);
+                        await (0, telegram_js_1.notifyImage)(`[WARNING] Falha ao executar o verificador. ${e.message}`);
                     }
-                    else {
-                        await page.screenshot({ path: "./image.png" });
-                        await (0, telegram_js_1.notifyImage)(`Nenhuma agenda disponível para o distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`);
-                    }
-                    await page.close();
                 }
             }
         }
@@ -81,17 +92,16 @@ async function run() {
     }
 }
 (async () => {
-    // console.log("Servico inicializado: ", process.env.CRONTAB);
-    // const options = {
-    //   cronTime: process.env.CRONTAB,
-    //   onTick: async () => {
-    //     console.log("Execução de serviço disparada");
-    //     await run();
-    //   },
-    //   runOnInit: true,
-    // };
-    // const job = new CronJob(options);
-    // job.start();
-    await run();
+    (0, log_1.default)(`Servico inicializado: ${process.env.CRONTAB}`);
+    const options = {
+        cronTime: configuration_1.default.getEnv().crontab,
+        onTick: async () => {
+            (0, log_1.default)(`Execução de serviço disparada`);
+            await run();
+        },
+        runOnInit: true,
+    };
+    const job = cron_1.CronJob.from(options);
+    job.start();
 })();
 //# sourceMappingURL=index.js.map

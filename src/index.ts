@@ -1,12 +1,12 @@
 import puppeteer from "puppeteer";
 import ParameterCrawler from "./ParameterCrawler";
 import configuration from "./configuration";
-import log from "./log";
+import log, { flushFile } from "./log";
 import AttendanceLocalityScenario from "./scenario/AttendanteLocalityScenario";
 import SchedulingSubjectScenario from "./scenario/SchedulingSubjectScenario";
 
 import { notifyText, notifyImage } from "./telegram.js";
-// import { CronJob } from "cron";
+import { CronJob } from "cron";
 
 async function launchBrowser() {
   return await puppeteer.launch({
@@ -17,8 +17,9 @@ async function launchBrowser() {
   });
 }
 
+let runCount = 0;
+
 async function run() {
-  notifyText("Verficando disponibilidade do servico");
   const browser = await launchBrowser();
   try {
     const [page] = await browser.pages();
@@ -39,60 +40,76 @@ async function run() {
             `Distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`
           );
           const page = await browser.newPage();
-          page.setViewport({ width: 1920, height: 1080 });
-          await page.goto(configuration.getEnv().url, {
-            waitUntil: "networkidle2",
-          });
+          page.setDefaultTimeout(2000);
+          page.setDefaultNavigationTimeout(2000);
 
-          await new SchedulingSubjectScenario(page).execute();
-          await new AttendanceLocalityScenario(
-            page,
-            district,
-            locality,
-            place
-          ).execute();
-
-          let scheduleAvailable = true;
           try {
-            const errorHtml = await page.waitForSelector(
-              "div.error-message > div > div > h5",
-              {
-                timeout: 1000,
-              }
-            );
+            page.setViewport({ width: 1920, height: 1080 });
+            await page.goto(configuration.getEnv().url, {
+              waitUntil: "networkidle2",
+            });
 
-            const errorMessage = await errorHtml?.evaluate(
-              (el) => el.textContent
-            );
-            console.log(errorMessage);
-            if (errorMessage) {
-              log(
-                `${errorMessage} Distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`
+            await new SchedulingSubjectScenario(page).execute();
+            await new AttendanceLocalityScenario(
+              page,
+              district,
+              locality,
+              place
+            ).execute();
+
+            let scheduleAvailable = true;
+            try {
+              const errorHtml = await page.waitForSelector(
+                "div.error-message > div > div > h5",
+                {
+                  timeout: 1000,
+                }
               );
 
-              scheduleAvailable = false;
+              const errorMessage = await errorHtml?.evaluate(
+                (el) => el.textContent
+              );
+              console.log(errorMessage);
+              if (errorMessage) {
+                log(
+                  `${errorMessage} Distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`
+                );
+
+                scheduleAvailable = false;
+              }
+            } catch (error) {
+              console.log(error);
             }
-          } catch (error) {
-            console.log(error);
-          }
 
-          if (scheduleAvailable) {
-            log(
-              `Agenda disponível para o distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`
-            );
+            if (scheduleAvailable) {
+              log(
+                `Agenda disponível para o distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`
+              );
 
+              await page.screenshot({ path: "./image.png" });
+              await notifyImage(
+                `Agenda disponível para o distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`
+              );
+            } else {
+              log(
+                `Nenhuma agenda disponível para o distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`
+              );
+              // await page.screenshot({ path: "./image.png" });
+              // await notifyImage(
+              //   `Nenhuma agenda disponível para o distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`
+              // );
+            }
+
+            await page.close();
+            await page.waitForTimeout(100);
+          } catch (err: unknown) {
+            let e: Error = err as Error;
+            console.error(e.message);
             await page.screenshot({ path: "./image.png" });
             await notifyImage(
-              `Agenda disponível para o distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`
-            );
-          } else {
-            await page.screenshot({ path: "./image.png" });
-            await notifyImage(
-              `Nenhuma agenda disponível para o distrito de ${district.name}, localidade de ${locality.name} - ${place.name}`
+              `[WARNING] Falha ao executar o verificador. ${e.message}`
             );
           }
-
-          await page.close();
         }
       }
     }
@@ -104,22 +121,27 @@ async function run() {
   } finally {
     await browser.close();
   }
+
+  runCount++;
+
+  if (runCount % 2 === 0) {
+    await flushFile();
+  }
 }
 
 (async () => {
-  // console.log("Servico inicializado: ", process.env.CRONTAB);
+  notifyText(`Serviço de verificação de vagas inicializado. Data: ${new Date().toLocaleString()}`);
+  log(`Servico inicializado: ${process.env.CRONTAB}`);
 
-  // const options = {
-  //   cronTime: process.env.CRONTAB,
-  //   onTick: async () => {
-  //     console.log("Execução de serviço disparada");
-  //     await run();
-  //   },
-  //   runOnInit: true,
-  // };
+  const options = {
+    cronTime: configuration.getEnv().crontab,
+    onTick: async () => {
+      log(`Execução de serviço disparada`);
+      await run();
+    },
+    runOnInit: true,
+  };
 
-  // const job = new CronJob(options);
-  // job.start();
-
-  await run();
+  const job = CronJob.from(options);
+  job.start();
 })();

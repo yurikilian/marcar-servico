@@ -14,9 +14,10 @@
     "puppeteer": "^21.7.0"
   },
   "scripts": {
-    "list": "pm2 list",
-    "kill": "pm2 delete all",
-    "start": "tsc && node build/index.js"
+    "start": "tsc && node build/index.js",
+    "start-service": "tsc && pm2 start build/index.js",
+    "kill-service": "pm2 delete all",
+    "list-service": "pm2 list"
   },
   "devDependencies": {
     "@types/node-telegram-bot-api": "^0.64.2",
