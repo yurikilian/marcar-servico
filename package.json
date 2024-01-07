@@ -1,22 +1,25 @@
 {
-  "name": "marcar_cnh",
+  "name": "agendamentosef",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
-  "type": "module",
   "dependencies": {
-    "cron": "^1.8.2",
-    "dotenv": "^10.0.0",
-    "jsdom": "^18.0.0",
+    "axios": "^1.6.5",
+    "cron": "^3.1.6",
+    "dotenv": "^16.3.1",
+    "jsdom": "^23.2.0",
     "node-fetch": "^3.0.0",
-    "node-telegram-bot-api": "^0.54.0",
-    "pm2": "^5.1.2",
-    "puppeteer-core": "^5.5.0"
+    "node-telegram-bot-api": "^0.64.0",
+    "pm2": "^5.3.0",
+    "puppeteer": "^21.7.0"
   },
   "scripts": {
-    "start": "pm2 start src/index.js",
     "list": "pm2 list",
-    "kill": "pm2 delete all"
+    "kill": "pm2 delete all",
+    "start": "tsc && node build/index.js"
+  },
+  "devDependencies": {
+    "@types/node-telegram-bot-api": "^0.64.2",
+    "typescript": "^5.3.3"
   }
 }
-
